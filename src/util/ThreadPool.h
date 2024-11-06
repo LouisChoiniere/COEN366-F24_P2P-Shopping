@@ -1,16 +1,12 @@
-
-#ifndef P2P_WITH_EVENTING_THREADPOOL_H
-#define P2P_WITH_EVENTING_THREADPOOL_H
+#pragma once
 
 #include <thread>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
-#include <atomic>
 #include <future>
 #include <vector>
 #include <memory>
-#include <unordered_map>
 #include <functional>
 
 
@@ -18,8 +14,9 @@
 class ThreadPool {
 public:
     explicit ThreadPool(size_t thread_count);
-    template<typename F>
-    auto enqueue(F &&f) -> std::future<typename std::result_of<F()>::type> {
+
+    template <typename F>
+    auto enqueue(F&& f) -> std::future<typename std::result_of<F()>::type> {
         using return_type = typename std::result_of<F()>::type;
         auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<F>(f));
         std::future<return_type> result = task->get_future();
@@ -33,6 +30,7 @@ public:
         condition_.notify_one();
         return result;
     }
+
     ~ThreadPool();
 
 private:
@@ -42,5 +40,3 @@ private:
     std::condition_variable condition_;
     bool stop_;
 };
-
-#endif //P2P_WITH_EVENTING_THREADPOOL_H

@@ -1,6 +1,4 @@
-
-#ifndef P2P_WITH_EVENTING_STATE_H
-#define P2P_WITH_EVENTING_STATE_H
+#pragma once
 
 // Generic state and event base classes
 class State {
@@ -8,5 +6,3 @@ public:
     virtual ~State() = default;
     virtual std::string getName() const = 0;
 };
-
-#endif //P2P_WITH_EVENTING_STATE_H

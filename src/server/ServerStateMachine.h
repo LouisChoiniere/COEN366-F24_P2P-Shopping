@@ -1,5 +1,10 @@
-#ifndef P2P_WITH_EVENTING_SERVERSTATEMACHINE_H
-#define P2P_WITH_EVENTING_SERVERSTATEMACHINE_H
+#pragma once
+
+#include <memory>
+
+#include "ServerState.h"
+#include "../util/Statemachine.h"
+#include "../P2P/P2PEvent.h"
 
 class ServerStateMachine : public StateMachine<ServerState, P2PEvent> {
 public:
@@ -27,5 +32,3 @@ private:
         // Add other transitions...
     }
 };
-
-#endif //P2P_WITH_EVENTING_SERVERSTATEMACHINE_H

@@ -10,13 +10,7 @@ find_package(Threads REQUIRED)
 #target_link_libraries(P2P_Client PRIVATE Threads::Threads)
 
 # Add the source files
-set(SOURCES
-    main.cpp
-    ConcurrentServer.h
-    MessageParser.cpp
-    ServerCommandHandlers.cpp
-    ThreadPool.cpp
-)
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 # Add the executable
 add_executable(COEN366_F24_P2P_Shopping ${SOURCES})
