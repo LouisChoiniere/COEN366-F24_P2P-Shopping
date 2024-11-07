@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../ConcurrentServer.h"
+#include "server/ConcurrentServer.h"
 
 
 // Example usage
