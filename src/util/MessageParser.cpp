@@ -1,4 +1,5 @@
 #include "MessageParser.h"
+
 #include <iostream>
 #include <chrono>
 #include <iomanip>
@@ -19,63 +20,63 @@ std::shared_ptr<P2PEvent> MessageParser::parseMessage(const std::string& message
 
         // Initialize message data with common fields
         P2PEvent::MessageData data{
-                j["rq"].get<int>(),
-                j.value("name", "")  // Optional for some commands
+            j["rq"].get<int>(),
+            j.value("name", "") // Optional for some commands
         };
 
         // Get command type
         auto type = stringToEventType(j["command"].get<std::string>());
 
         // Populate command-specific fields
-        switch(type) {
-            case P2PEventType::REGISTER:
-                data.ip_address = j["ip"];
-                data.udp_port = j["udp_port"];
-                data.tcp_port = j["tcp_port"];
-                break;
+        switch (type) {
+        case P2PEventType::REGISTER:
+            data.ip_address = j["ip"];
+            data.udp_port = j["udp_port"];
+            data.tcp_port = j["tcp_port"];
+            break;
 
-            case P2PEventType::LOOKING_FOR:
-            case P2PEventType::SEARCH:
-                data.item_name = j["item_name"];
-                data.item_description = j["description"];
-                if (type == P2PEventType::LOOKING_FOR) {
-                    data.max_price = j["max_price"];
-                }
-                break;
+        case P2PEventType::LOOKING_FOR:
+        case P2PEventType::SEARCH:
+            data.item_name = j["item_name"];
+            data.item_description = j["description"];
+            if (type == P2PEventType::LOOKING_FOR) {
+                data.max_price = j["max_price"];
+            }
+            break;
 
-            case P2PEventType::OFFER:
-                data.item_name = j["item_name"];
+        case P2PEventType::OFFER:
+            data.item_name = j["item_name"];
+            data.price = j["price"];
+            break;
+
+        case P2PEventType::NEGOTIATE:
+            data.item_name = j["item_name"];
+            data.price = j["max_price"];
+            break;
+
+        case P2PEventType::ACCEPT:
+        case P2PEventType::REFUSE:
+            data.item_name = j["item_name"];
+            data.price = j["price"];
+            break;
+
+        case P2PEventType::NOT_AVAILABLE:
+        case P2PEventType::NOT_FOUND:
+        case P2PEventType::FOUND:
+            data.item_name = j["item_name"];
+            if (j.contains("price")) {
                 data.price = j["price"];
-                break;
+            }
+            break;
 
-            case P2PEventType::NEGOTIATE:
-                data.item_name = j["item_name"];
-                data.price = j["max_price"];
-                break;
+        case P2PEventType::REGISTER_DENIED:
+            if (j.contains("reason")) {
+                data.reason = j["reason"];
+            }
+            break;
 
-            case P2PEventType::ACCEPT:
-            case P2PEventType::REFUSE:
-                data.item_name = j["item_name"];
-                data.price = j["price"];
-                break;
-
-            case P2PEventType::NOT_AVAILABLE:
-            case P2PEventType::NOT_FOUND:
-            case P2PEventType::FOUND:
-                data.item_name = j["item_name"];
-                if (j.contains("price")) {
-                    data.price = j["price"];
-                }
-                break;
-
-            case P2PEventType::REGISTER_DENIED:
-                if (j.contains("reason")) {
-                    data.reason = j["reason"];
-                }
-                break;
-
-            default:
-                break;
+        default:
+            break;
         }
 
         // Validate fields for this command type
@@ -97,39 +98,39 @@ std::shared_ptr<P2PEvent> MessageParser::parseMessage(const std::string& message
 
 bool MessageParser::validateCommandFields(const json& j, P2PEventType type) {
     try {
-        switch(type) {
-            case P2PEventType::REGISTER:
-                return j.contains("ip") && j.contains("udp_port") && j.contains("tcp_port");
+        switch (type) {
+        case P2PEventType::REGISTER:
+            return j.contains("ip") && j.contains("udp_port") && j.contains("tcp_port");
 
-            case P2PEventType::LOOKING_FOR:
-                return j.contains("item_name") && j.contains("description") &&
-                       j.contains("max_price") && j.contains("name");
+        case P2PEventType::LOOKING_FOR:
+            return j.contains("item_name") && j.contains("description") &&
+                j.contains("max_price") && j.contains("name");
 
-            case P2PEventType::SEARCH:
-                return j.contains("item_name") && j.contains("description");
+        case P2PEventType::SEARCH:
+            return j.contains("item_name") && j.contains("description");
 
-            case P2PEventType::OFFER:
-                return j.contains("item_name") && j.contains("price") && j.contains("name");
+        case P2PEventType::OFFER:
+            return j.contains("item_name") && j.contains("price") && j.contains("name");
 
-            case P2PEventType::NEGOTIATE:
-            case P2PEventType::ACCEPT:
-            case P2PEventType::REFUSE:
-                return j.contains("item_name") && j.contains("price") && j.contains("name");
+        case P2PEventType::NEGOTIATE:
+        case P2PEventType::ACCEPT:
+        case P2PEventType::REFUSE:
+            return j.contains("item_name") && j.contains("price") && j.contains("name");
 
-            case P2PEventType::NOT_AVAILABLE:
-            case P2PEventType::NOT_FOUND:
-            case P2PEventType::FOUND:
-                return j.contains("item_name");
+        case P2PEventType::NOT_AVAILABLE:
+        case P2PEventType::NOT_FOUND:
+        case P2PEventType::FOUND:
+            return j.contains("item_name");
 
-            case P2PEventType::REGISTER_DENIED:
-            case P2PEventType::REGISTERED:
-                return true;  // reason is optional
+        case P2PEventType::REGISTER_DENIED:
+        case P2PEventType::REGISTERED:
+            return true; // reason is optional
 
-            case P2PEventType::DE_REGISTER:
-                return j.contains("name");
+        case P2PEventType::DE_REGISTER:
+            return j.contains("name");
 
-            default:
-                return false;
+        default:
+            return false;
         }
     }
     catch (const std::exception& e) {
@@ -174,18 +175,18 @@ void MessageParser::printCommandFields(const json& j, const std::string& command
         std::cout << std::left << std::setw(15) << "Description:" << j.value("description", "UNKNOWN") << std::endl;
         if (j.contains("max_price")) {
             std::cout << std::left << std::setw(15) << "Max Price:" << "$" << std::fixed
-                      << std::setprecision(2) << j["max_price"].get<double>() << std::endl;
+                << std::setprecision(2) << j["max_price"].get<double>() << std::endl;
         }
     }
     else if (command == "OFFER" || command == "NEGOTIATE" || command == "ACCEPT" ||
-             command == "REFUSE" || command == "NOT_AVAILABLE" || command == "NOT_FOUND" ||
-             command == "FOUND" || command == "RESERVE" || command == "CANCEL" || command == "BUY") {
+        command == "REFUSE" || command == "NOT_AVAILABLE" || command == "NOT_FOUND" ||
+        command == "FOUND" || command == "RESERVE" || command == "CANCEL" || command == "BUY") {
         if (j.contains("name")) {
             std::cout << std::left << std::setw(15) << "Name:" << j["name"].get<std::string>() << std::endl;
         }
         std::cout << std::left << std::setw(15) << "Item:" << j.value("item_name", "UNKNOWN") << std::endl;
         std::cout << std::left << std::setw(15) << "Price:" << "$" << std::fixed
-                  << std::setprecision(2) << j.value("price", 0.0) << std::endl;
+            << std::setprecision(2) << j.value("price", 0.0) << std::endl;
     }
 }
 
@@ -206,19 +207,19 @@ std::string MessageParser::getCurrentTimestamp() {
 
 // Initialize the command mapping
 const std::unordered_map<std::string, P2PEventType> MessageParser::commandMap = {
-        {"REGISTER", P2PEventType::REGISTER},
-        {"REGISTER-DENIED", P2PEventType::REGISTER_DENIED},
-        {"REGISTERED", P2PEventType::REGISTERED},
-        {"LOOKING_FOR", P2PEventType::LOOKING_FOR},
-        {"SEARCH", P2PEventType::SEARCH},
-        {"OFFER", P2PEventType::OFFER},
-        {"NOT_AVAILABLE", P2PEventType::NOT_AVAILABLE},
-        {"NEGOTIATE", P2PEventType::NEGOTIATE},
-        {"ACCEPT", P2PEventType::ACCEPT},
-        {"FOUND", P2PEventType::FOUND},
-        {"REFUSE", P2PEventType::REFUSE},
-        {"NOT_FOUND", P2PEventType::NOT_FOUND},
-        {"RESERVE", P2PEventType::RESERVE},
-        {"CANCEL", P2PEventType::CANCEL},
-        {"BUY", P2PEventType::BUY}
+    {"REGISTER", P2PEventType::REGISTER},
+    {"REGISTER-DENIED", P2PEventType::REGISTER_DENIED},
+    {"REGISTERED", P2PEventType::REGISTERED},
+    {"LOOKING_FOR", P2PEventType::LOOKING_FOR},
+    {"SEARCH", P2PEventType::SEARCH},
+    {"OFFER", P2PEventType::OFFER},
+    {"NOT_AVAILABLE", P2PEventType::NOT_AVAILABLE},
+    {"NEGOTIATE", P2PEventType::NEGOTIATE},
+    {"ACCEPT", P2PEventType::ACCEPT},
+    {"FOUND", P2PEventType::FOUND},
+    {"REFUSE", P2PEventType::REFUSE},
+    {"NOT_FOUND", P2PEventType::NOT_FOUND},
+    {"RESERVE", P2PEventType::RESERVE},
+    {"CANCEL", P2PEventType::CANCEL},
+    {"BUY", P2PEventType::BUY}
 };

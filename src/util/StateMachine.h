@@ -1,25 +1,27 @@
+#pragma once
 
+#include <functional>
+#include <memory>
 
-#ifndef P2P_WITH_EVENTING_STATEMACHINE_H
-#define P2P_WITH_EVENTING_STATEMACHINE_H
 // Generic state machine
-template<typename StateType, typename EventType>
+template <typename StateType, typename EventType>
 class StateMachine {
 public:
     using StatePtr = std::shared_ptr<StateType>;
     using EventPtr = std::shared_ptr<EventType>;
     using Handler = std::function<StatePtr(const EventPtr&)>;
     using TransitionTable = std::unordered_map<
-    std::string,
-    std::unordered_map<std::string, Handler>
+        std::string,
+        std::unordered_map<std::string, Handler>
     >;
 
-    StateMachine(StatePtr initial_state) : current_state_(initial_state) {}
+    StateMachine(StatePtr initial_state) : current_state_(initial_state) {
+    }
 
     void addTransition(
-            const StatePtr& from_state,
-            const EventPtr& event,
-            const Handler& handler
+        const StatePtr& from_state,
+        const EventPtr& event,
+        const Handler& handler
     ) {
         transitions_[from_state->getName()][event->getName()] = handler;
     }
@@ -43,5 +45,3 @@ protected:
     StatePtr current_state_;
     TransitionTable transitions_;
 };
-
-#endif //P2P_WITH_EVENTING_STATEMACHINE_H

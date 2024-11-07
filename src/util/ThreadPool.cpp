@@ -1,5 +1,4 @@
-#include "threadpool.h"
-
+#include "ThreadPool.h"
 
 ThreadPool::ThreadPool(size_t thread_count) : stop_(false) {
     for (size_t i = 0; i < thread_count; ++i) {
@@ -29,7 +28,7 @@ ThreadPool::~ThreadPool() {
         stop_ = true;
     }
     condition_.notify_all();
-    for (std::thread &worker: workers_) {
+    for (std::thread& worker : workers_) {
         worker.join();
     }
 }

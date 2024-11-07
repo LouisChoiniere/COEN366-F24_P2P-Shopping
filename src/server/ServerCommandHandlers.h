@@ -1,13 +1,11 @@
-#ifndef P2P_WITH_EVENTING_SERVERHANDLERS_H
-#define P2P_WITH_EVENTING_SERVERHANDLERS_H
+#pragma once
 
 #include <unordered_map>
 #include <string>
 #include <memory>
-#include "P2PEvent.h"
-#include "MessageParser.h"
+
 #include "PeerSession.h"
-#include "PeerStateMachine.h"
+#include "../util/MessageParser.h"
 
 class ServerCommandHandlers {
 public:
@@ -33,12 +31,14 @@ private:
         sockaddr_in seller_addr;
 
         // Default constructor
-        OfferInfo() : seller_name(""), price(0.0), seller_addr{} {}
+        OfferInfo() : seller_name(""), price(0.0), seller_addr{} {
+        }
 
         OfferInfo(std::string name, double p, sockaddr_in addr)
-                : seller_name(std::move(name))
-                , price(p)
-                , seller_addr(addr) {}
+            : seller_name(std::move(name))
+              , price(p)
+              , seller_addr(addr) {
+        }
     };
 
     struct SearchRequest {
@@ -53,22 +53,24 @@ private:
 
         // Default constructor
         SearchRequest()
-                : request_number(0)
-                , searcher_name("")
-                , item_name("")
-                , max_price(0.0)
-                , searcher_addr{}
-                , start_time(std::chrono::steady_clock::now())
-                , offers_processed(false) {}
+            : request_number(0)
+              , searcher_name("")
+              , item_name("")
+              , max_price(0.0)
+              , searcher_addr{}
+              , start_time(std::chrono::steady_clock::now())
+              , offers_processed(false) {
+        }
 
         SearchRequest(int rq, std::string name, std::string item, double price, sockaddr_in addr)
-                : request_number(rq)
-                , searcher_name(std::move(name))
-                , item_name(std::move(item))
-                , max_price(price)
-                , searcher_addr(addr)
-                , start_time(std::chrono::steady_clock::now())
-                , offers_processed(false) {}
+            : request_number(rq)
+              , searcher_name(std::move(name))
+              , item_name(std::move(item))
+              , max_price(price)
+              , searcher_addr(addr)
+              , start_time(std::chrono::steady_clock::now())
+              , offers_processed(false) {
+        }
     };
 
     std::unordered_map<int, SearchRequest> active_searches_;
@@ -83,5 +85,3 @@ private:
     void sendToClient(const json& msg, const sockaddr_in& client_addr);
     void processOffersAfterTimeout(int request_number);
 };
-
-#endif //P2P_WITH_EVENTING_SERVERHANDLERS_H
