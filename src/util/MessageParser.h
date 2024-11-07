@@ -1,14 +1,12 @@
-#ifndef P2P_WITH_EVENTING_MESSAGEPARSER_H
-#define P2P_WITH_EVENTING_MESSAGEPARSER_H
+#pragma once
 
-// #include <nlohmann/json.hpp>
-#include "libraries/json.hpp"
-#include "P2PEvent.h"
-#include <optional>
 #include <string>
 #include <unordered_map>
-#include <iomanip>
-#include <sstream>
+
+// #include <nlohmann/json.hpp>
+#include "../../libraries/json.hpp"
+
+#include "../P2P/P2PEvent.h"
 
 using json = nlohmann::json;
 
@@ -24,5 +22,3 @@ private:
     static P2PEventType stringToEventType(const std::string& commandStr);
     static std::string getCurrentTimestamp();
 };
-
-#endif //P2P_WITH_EVENTING_MESSAGEPARSER_H

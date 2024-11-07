@@ -1,10 +1,8 @@
-#ifndef P2P_WITH_EVENTING_PEERSTATEMACHINE_H
-#define P2P_WITH_EVENTING_PEERSTATEMACHINE_H
+#pragma once
 
-#include "StateMachine.h"
-#include "P2PEvent.h"
-#include "P2PState.h"
-
+#include "../util/StateMachine.h"
+#include "../P2P/P2PEvent.h"
+#include "../P2P/P2PState.h"
 
 // Peer implementation using generic state machine
 class PeerStateMachine : public StateMachine<P2PState, P2PEvent> {
@@ -26,8 +24,5 @@ private:
                     return std::make_shared<P2PState>(P2PStateType::REGISTERING);
                 }
         );
-
     }
 };
-
-#endif //P2P_WITH_EVENTING_PEERSTATEMACHINE_H
