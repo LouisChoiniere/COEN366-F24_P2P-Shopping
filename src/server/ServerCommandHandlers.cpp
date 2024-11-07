@@ -1,12 +1,12 @@
+#include "ServerCommandHandlers.h"
 
-#include "ServerHandlers.h"
 #include <unordered_map>
 #include <string>
 #include <memory>
 #include <iostream>
-#include "P2PEvent.h"
-#include "MessageParser.h"
+#include <arpa/inet.h>
 
+#include "../util/MessageParser.h"
 
 ServerCommandHandlers::ServerCommandHandlers(int socket,
                                              std::unordered_map<std::string, std::shared_ptr<PeerSession>> &peer_sessions,

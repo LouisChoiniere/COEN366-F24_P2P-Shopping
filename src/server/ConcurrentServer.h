@@ -1,5 +1,4 @@
-#ifndef P2P_WITH_EVENTING_CONCURRENTSERVER_H
-#define P2P_WITH_EVENTING_CONCURRENTSERVER_H
+#pragma once
 
 #include <thread>
 #include <mutex>
@@ -13,9 +12,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "MessageParser.h"
-#include "ServerHandlers.h"
-#include "src/ConcurrentQueue.h"
+#include "ServerCommandHandlers.h"
+#include "ServerStateMachine.h"
+#include "../util/MessageParser.h"
+#include "../util/ConcurrentQueue.h"
+#include "../util/ThreadPool.h"
 
 
 class ConcurrentServer {
@@ -159,5 +160,3 @@ private:
     ) {
     }
 };
-
-#endif //P2P_WITH_EVENTING_CONCURRENTSERVER_H
