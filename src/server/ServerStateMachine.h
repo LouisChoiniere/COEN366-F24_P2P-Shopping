@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "ServerState.h"
-#include "../util/Statemachine.h"
+#include "../util/StateMachine.h"
 #include "../P2P/P2PEvent.h"
 
 class ServerStateMachine : public StateMachine<ServerState, P2PEvent> {

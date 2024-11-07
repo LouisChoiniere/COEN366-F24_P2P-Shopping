@@ -1,6 +1,7 @@
 #include "client.h"
 
 #include <fcntl.h>
+#include <arpa/inet.h>
 
 P2PClient::~P2PClient() {
     stop();
