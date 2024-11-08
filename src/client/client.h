@@ -121,7 +121,7 @@ private:
 
     void receiveMessages();
 
-    void printHelp();
+    static void printHelp();
 
     void printStatus();
 
@@ -133,7 +133,7 @@ private:
 
     int getNextRequestNumber();
 
-    std::string getStateName(P2PStateType state);
+    static std::string getStateName(P2PStateType state);
 
     void logOutgoingMessage(const json& msg);
 

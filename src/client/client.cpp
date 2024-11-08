@@ -41,17 +41,24 @@ void P2PClient::processUserCommand(const std::string& command) {
         double price;
 
         iss >> name;
-        iss >> description;
+
+        iss.get(); // Remove leading space
+        if (iss.peek() == '"') {
+            iss.get(); // Skip the opening quote
+            std::getline(iss, description, '"'); // Read until the closing quote
+        }
+        else { iss >> description; }
+
         iss >> price;
 
         addItem(name, description, price);
     }
-    else if (cmd == "remove") {
+    else if (cmd == "remove" | cmd == "rm") {
         std::string name;
         iss >> name;
         removeItem(name);
     }
-    else if (cmd == "list") { listInventory(); }
+    else if (cmd == "list" || cmd == "ls") { listInventory(); }
     else if (cmd == "help" || cmd == "h") { printHelp(); }
     else if (cmd == "register" || cmd == "r") { registerWithServer(); }
     else if (cmd == "deregister" || cmd == "d") { deregister(); }
@@ -80,8 +87,8 @@ void P2PClient::printHelp() {
     std::cout << "refuse    (f) <request_number> <item_name> <price> - Refuse an offer" << std::endl;
     std::cout << "status        - Show current client status" << std::endl;
     std::cout << "add       <name> <description> <price> - Add item to inventory" << std::endl;
-    std::cout << "remove    <name> - Remove item from inventory" << std::endl;
-    std::cout << "list            - List all items in inventory" << std::endl;
+    std::cout << "remove    (rm) <name> - Remove item from inventory" << std::endl;
+    std::cout << "list      (ls)- List all items in inventory" << std::endl;
     std::cout << "help      (h) - Show this help message" << std::endl;
     std::cout << "quit      (q) - Exit the client" << std::endl;
     std::cout << "=======================\n" << std::endl;
@@ -105,10 +112,16 @@ void P2PClient::handleSearchCommand(std::istringstream& iss) {
     std::string item_name, description;
     double max_price;
 
-    if (!(iss >> item_name >> description >> max_price)) {
-        std::cout << "Usage: search <item_name> <description> <max_price>" << std::endl;
-        return;
+    iss >> item_name;
+
+    iss.get(); // Remove leading space
+    if (iss.peek() == '"') {
+        iss.get(); // Skip the opening quote
+        std::getline(iss, description, '"'); // Read until the closing quote
     }
+    else { iss >> description; }
+
+    iss >> max_price;
 
     searchItem(item_name, description, max_price);
 }
