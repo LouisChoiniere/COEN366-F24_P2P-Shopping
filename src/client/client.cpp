@@ -63,6 +63,7 @@ void P2PClient::processUserCommand(const std::string& command) {
     else if (cmd == "register" || cmd == "r") { registerWithServer(); }
     else if (cmd == "deregister" || cmd == "d") { deregister(); }
     else if (cmd == "search" || cmd == "s") { handleSearchCommand(iss); }
+    else if (cmd == "listOffers" || cmd == "ls offers" ) { handleListOffersCommand(iss); }
     else if (cmd == "negotiate" || cmd == "n") { handleNegotiateCommand(iss); }
     else if (cmd == "accept" || cmd == "a") { handleAcceptCommand(iss); }
     else if (cmd == "refuse" || cmd == "f") { handleRefuseCommand(iss); }
@@ -72,8 +73,7 @@ void P2PClient::processUserCommand(const std::string& command) {
         running_ = false;
     }
     else {
-        std::cout << "Unknown command. Type 'help' for available commands." <<
-            std::endl;
+        std::cout << "Unknown command. Type 'help' for available commands." << std::endl;
     }
 }
 
@@ -82,6 +82,7 @@ void P2PClient::printHelp() {
     std::cout << "register  (r) - Register with the server" << std::endl;
     std::cout << "deregister(d) - Deregister from the server" << std::endl;
     std::cout << "search    (s) <item_name> <description> <max_price> - Search for an item" << std::endl;
+    std::cout << "listOffers(ls offers) - List active offers" << std::endl;
     std::cout << "negotiate (n) <request_number> <item_name> <counter_price> - Negotiate an offer" << std::endl;
     std::cout << "accept    (a) <request_number> <item_name> <price> - Accept an offer" << std::endl;
     std::cout << "refuse    (f) <request_number> <item_name> <price> - Refuse an offer" << std::endl;
@@ -124,6 +125,18 @@ void P2PClient::handleSearchCommand(std::istringstream& iss) {
     iss >> max_price;
 
     searchItem(item_name, description, max_price);
+}
+
+void P2PClient::handleListOffersCommand(std::istringstream& iss) {
+
+    std::cout << "\n=== List of Offers ===" << std::endl;
+    for (const auto& offer : offers_) {
+        std::cout << "Request Number: " << offer.requestNumber << std::endl;
+        std::cout << "Name" << offer.name << std::endl;
+        std::cout << "Offered Price" << offer.price << std::endl;
+
+        std::cout << std::endl;
+    }
 }
 
 void P2PClient::handleNegotiateCommand(std::istringstream&) {
@@ -256,6 +269,22 @@ bool P2PClient::negotiateOffer(int request_number, const std::string& item_name,
         return false;
     }
 
+    auto it = std::find_if(offers_.begin(), offers_.end(), [request_number](const Offer& offer) {
+        return offer.requestNumber == request_number;
+    });
+
+    if (it == offers_.end()) {
+        std::cout << "Offer not found for request number: " << request_number << std::endl;
+        return false;
+    }
+
+    if (it.base()->name != item_name) {
+        std::cout << "Item name does not match request number" << std::endl;
+        return false;
+    }
+
+    offers_.erase(it);
+
     json negotiate_msg = {
         {"command", "NEGOTIATE"},
         {"rq", request_number},
@@ -273,6 +302,22 @@ bool P2PClient::negotiateOffer(int request_number, const std::string& item_name,
 }
 
 bool P2PClient::acceptOffer(int request_number, const std::string& item_name, double price) {
+    auto it = std::find_if(offers_.begin(), offers_.end(), [request_number](const Offer& offer) {
+        return offer.requestNumber == request_number;
+    });
+
+    if (it == offers_.end()) {
+        std::cout << "Offer not found for request number: " << request_number << std::endl;
+        return false;
+    }
+
+    if (it.base()->name != item_name || it.base()->price != price) {
+        std::cout << "Item name and price do not match" << std::endl;
+        return false;
+    }
+
+    offers_.erase(it);
+
     json accept_msg = {
         {"command", "ACCEPT"},
         {"rq", request_number},
@@ -286,6 +331,22 @@ bool P2PClient::acceptOffer(int request_number, const std::string& item_name, do
 }
 
 bool P2PClient::refuseOffer(int request_number, const std::string& item_name, double price) {
+    auto it = std::find_if(offers_.begin(), offers_.end(), [request_number](const Offer& offer) {
+        return offer.requestNumber == request_number;
+    });
+
+    if (it == offers_.end()) {
+        std::cout << "Offer not found for request number: " << request_number << std::endl;
+        return false;
+    }
+
+    if (it.base()->name != item_name || it.base()->price != price) {
+        std::cout << "Item name and price do not match" << std::endl;
+        return false;
+    }
+
+    offers_.erase(it);
+
     json refuse_msg = {
         {"command", "REFUSE"},
         {"rq", request_number},
@@ -362,10 +423,6 @@ void P2PClient::handleReceivedMessage(const std::string& message) {
         handleSearchEvent(event);
         break;
 
-    case P2PEventType::OFFER:
-        handleOffer(event);
-        break;
-
     case P2PEventType::FOUND:
         current_state_ = P2PStateType::REGISTERED;
         std::cout << "Item found! Ready for purchase" << std::endl;
@@ -376,15 +433,139 @@ void P2PClient::handleReceivedMessage(const std::string& message) {
         std::cout << "Item not found" << std::endl;
         break;
 
+    case P2PEventType::OFFER:
+    case P2PEventType::NEGOTIATE:
+        handleOfferEvent(event);
+        break;
+
+    case P2PEventType::ACCEPT:
+        // Remove item and write to console that it has been sold.
+        break;
+
+    case P2PEventType::REFUSE:
+        std::cout << "Offer was refused for " << event->getData().item_name << "." << std::endl;
+
     default:
         std::cout << "Received message: " << message << std::endl;
         break;
     }
 }
 
-void P2PClient::handleOffer(const std::shared_ptr<P2PEvent>& event) {
-    std::cout << "Received offer from peer" << std::endl;
+void P2PClient::handleOfferEvent(const std::shared_ptr<P2PEvent>& event) {
+    if (current_state_ != P2PStateType::REGISTERED) {
+        return; // Only registered peers can respond to searches
+    }
+
+    std::cout << "Received offer from peer (execute \"ls offers\" to see the offers)" << std::endl;
+    auto messageData = event->getData();
+
+    offers_.push_back({
+        messageData.request_number,
+        messageData.item_name,
+        messageData.item_name,
+        messageData.price,
+    });
 }
+
+void P2PClient::handleSearchEvent(const std::shared_ptr<P2PEvent>& event) {
+    if (current_state_ != P2PStateType::REGISTERED) {
+        return; // Only registered peers can respond to searches
+    }
+
+    const auto& data = event->getData();
+    std::string item_name = data.item_name;
+    int request_number = data.request_number;
+
+    // Check if we have the item in our inventory
+    for (const auto& item : inventory_) {
+        if (item.name == item_name) {
+            // Found the item, send an offer
+            json offer_msg = {
+                {"command", "OFFER"},
+                {"rq", request_number},
+                {"name", name_}, // Our name as the offering peer
+                {"item_name", item_name},
+                {"price", item.price}
+            };
+
+            logOutgoingMessage(offer_msg);
+            sendMessage(offer_msg);
+
+            std::cout << "Sent offer for item: " << item_name
+                << " at price: $" << item.price << std::endl;
+            return;
+        }
+    }
+}
+
+// Buyer receives accept event
+void P2PClient::handleAcceptEvent(const std::shared_ptr<P2PEvent>& event) {
+    if (current_state_ != P2PStateType::REGISTERED) {
+        return; // Only registered peers can respond to searches
+    }
+
+    const auto& data = event->getData();
+    const std::string& name = data.item_name;
+
+    // Buy Item
+    json buy_msg = {
+        {"command", "BUY"},
+        {"rq", data.request_number},
+        {"name", name_}, // Our name as the offering peer
+        {"item_name", data.item_name},
+        {"price", data.price},
+    };
+
+    logOutgoingMessage(buy_msg);
+    sendMessage(buy_msg);
+}
+
+// Seller receives Buy event
+void P2PClient::handleBuyEvent(const std::shared_ptr<P2PEvent>& event) {
+    if (current_state_ != P2PStateType::REGISTERED) {
+        return; // Only registered peers can respond to searches
+    }
+
+    const auto& data = event->getData();
+    const std::string& name = data.item_name;
+
+    // Check if item is still in inventory
+    auto it = std::find_if(inventory_.begin(), inventory_.end(), [&name](const Item& item) {
+        return item.name == name;
+    });
+
+    if (it == inventory_.end()) {
+        std::cout << "Item was not found in inventory";
+        return;
+    }
+
+    // Remove from inventory
+    inventory_.erase(it);
+
+    // Ship Item
+    json buy_msg = {
+        {"command", "SHIPPED"},
+        {"rq", data.request_number},
+        {"name", name_}, // Our name as the offering peer
+        {"item_name", data.item_name}
+    };
+
+    std::cout << "Item " << name << " has been shipped to " << data.sender_name << std::endl;
+
+    logOutgoingMessage(buy_msg);
+    sendMessage(buy_msg);
+}
+
+void P2PClient::handleShippedEvent(const std::shared_ptr<P2PEvent>& event) {
+    if (current_state_ != P2PStateType::REGISTERED) {
+        return; // Only registered peers can respond to searches
+    }
+
+
+}
+
+
+
 
 bool P2PClient::sendMessage(const json& msg) {
     std::string message = msg.dump();
@@ -424,38 +605,6 @@ struct Item {
     std::string description;
     double price;
 };
-
-void P2PClient::handleSearchEvent(const std::shared_ptr<P2PEvent>& event) {
-    if (current_state_ != P2PStateType::REGISTERED) {
-        return; // Only registered peers can respond to searches
-    }
-
-    const auto& data = event->getData();
-    std::string item_name = data.item_name;
-    int request_number = data.request_number;
-
-    // Check if we have the item in our inventory
-    for (const auto& item : inventory_) {
-        if (item.name == item_name) {
-            // Found the item, send an offer
-            json offer_msg = {
-                {"command", "OFFER"},
-                {"rq", request_number},
-                {"name", name_}, // Our name as the offering peer
-                {"item_name", item_name},
-                {"price", item.price}
-            };
-
-            logOutgoingMessage(offer_msg);
-            sendMessage(offer_msg);
-
-            std::cout << "Sent offer for item: " << item_name
-                << " at price: $" << item.price << std::endl;
-            return;
-        }
-    }
-}
-
 
 void P2PClient::addItem(const std::string& name, const std::string& description, double price) {
     inventory_.push_back({name, description, price});

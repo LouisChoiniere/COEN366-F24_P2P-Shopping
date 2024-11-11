@@ -22,6 +22,7 @@ enum class P2PEventType {
     RESERVE,
     CANCEL,
     BUY,
+    SHIPPED,
     UNKNOWN
 };
 
@@ -74,6 +75,7 @@ public:
         case P2PEventType::RESERVE: return "RESERVE";
         case P2PEventType::CANCEL: return "CANCEL";
         case P2PEventType::BUY: return "BUY";
+        case P2PEventType::SHIPPED: return "SHIPPED";
         default: return "UNKNOWN";
         }
     }
