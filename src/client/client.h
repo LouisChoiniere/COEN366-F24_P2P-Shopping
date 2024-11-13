@@ -103,9 +103,16 @@ private:
         double price;
     };
 
+    struct Offer {
+        int requestNumber;
+        std::string name;
+        std::string description;
+        double price;
+    };
+
     std::vector<Item> inventory_;
 
-    void handleSearchEvent(const std::shared_ptr<P2PEvent>& event);
+    std::vector<Offer> offers_;
 
     void addItem(const std::string& name, const std::string& description, double price);
 
@@ -140,6 +147,8 @@ private:
     // Command handlers
     void handleSearchCommand(std::istringstream& iss);
 
+    void handleListOffersCommand(std::istringstream& iss);
+
     void handleNegotiateCommand(std::istringstream& iss);
 
     void handleAcceptCommand(std::istringstream& iss);
@@ -148,5 +157,13 @@ private:
 
     void handleReceivedMessage(const std::string& message);
 
-    void handleOffer(const std::shared_ptr<P2PEvent>& event);
+    void handleSearchEvent(const std::shared_ptr<P2PEvent>& event);
+
+    void handleOfferEvent(const std::shared_ptr<P2PEvent>& event);
+
+    void handleAcceptEvent(const std::shared_ptr<P2PEvent>& event);
+
+    void handleBuyEvent(const std::shared_ptr<P2PEvent>& event);
+
+    void handleShippedEvent(const std::shared_ptr<P2PEvent>& event);
 };
