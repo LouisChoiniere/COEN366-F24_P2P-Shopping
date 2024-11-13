@@ -17,6 +17,8 @@ The Peer-to-Peer Shopping System (P2S2) allows users to search for items and pur
 - **TCP Communication**: Used for finalizing purchases, including payment and shipping information.
 
 ## Getting Started
+### Recomended IDE
+We recomend to use the CLion IDE from JetBrains to run this project.
 ### Prerequisites
 - CMake 3.25.1 or higher
 - A C++ compiler that supports C++20
@@ -29,3 +31,7 @@ To start the server, execute:
 ### Running the Client
 To start a client, execute:
 ```ClientExecutable```
+### Program Arguments
+Don't forget to add the program arguments when running the client/server
+Example arguments to use on the client
+```peer1 127.0.0.1 8080 5000 5001```
